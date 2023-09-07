@@ -54,6 +54,22 @@ void KalmanFilter::setObservationMappingMatrix(Eigen::MatrixXd C) {
     this->C = C;
 }
 
+void KalmanFilter::setProcessNoise(Eigen::VectorXd processNoise) {
+    // check the process noise vector dimension
+    if(processNoise.rows() != this->stateDimension)
+        throw std::runtime_error("Mismatched process noise dimension. Must be the same as the state dimension.");
+
+    this->processNoise = processNoise;
+}
+
+void KalmanFilter::setMeasurementNoise(Eigen::VectorXd measurementNoise) {
+    // check the measurement noise vector dimension
+    if(measurementNoise.rows() != this->observationDimension)
+        throw std::runtime_error("Mismatched measurement noise dimenson. Must be the same as the observation dimension.");
+
+    this->measurementNoise = measurementNoise;
+}
+
 Eigen::MatrixXd KalmanFilter::getMotionMatrix() {
     return this->A;
 }
@@ -64,6 +80,14 @@ Eigen::MatrixXd KalmanFilter::getControlMatrix() {
 
 Eigen::MatrixXd KalmanFilter::getObservationMappingMatrix() {
     return this->C;
+}
+
+Eigen::VectorXd KalmanFilter::getProcessNoise() {
+    return this->processNoise;
+}
+
+Eigen::VectorXd KalmanFilter::getMeasurementNoise() {
+    return this->measurementNoise;
 }
 
 

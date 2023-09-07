@@ -33,6 +33,12 @@ namespace kalman::filters {
             /*! \brief Matrix describing how to map the state to the observation. Typically denoted as "C". */
             void setObservationMappingMatrix(Eigen::MatrixXd C);
 
+            /*! \brief Set the process noise. */
+            void setProcessNoise(Eigen::VectorXd processNoise);
+
+            /*! \brief Set the measurement noise. */
+            void setMeasurementNoise(Eigen::VectorXd measurementNoise);
+
             /*! \brief Matrix of motion evolution without controls. Typically denoted as "A". */
             Eigen::MatrixXd getMotionMatrix();
 
@@ -41,6 +47,12 @@ namespace kalman::filters {
 
             /*! \brief Matrix describing how to map the state to the observation. Typically denoted as "C". */
             Eigen::MatrixXd getObservationMappingMatrix();
+
+            /*! \brief Process noise. */
+            Eigen::VectorXd getProcessNoise();
+
+            /*! \brief Measurement noise. */
+            Eigen::VectorXd getMeasurementNoise();
 
 
         private:
@@ -63,6 +75,12 @@ namespace kalman::filters {
 
             /*! \brief Last measurement timestamp. */
             std::chrono::time_point<std::chrono::system_clock> lastMeasurementTimestamp;
+
+            /*! \brief Process noise vector. */
+            Eigen::VectorXd processNoise;
+
+            /*! \brief Measurement noise vector. */
+            Eigen::VectorXd measurementNoise;
 
             // TODO: covariance matrices
 
