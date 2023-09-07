@@ -4,8 +4,8 @@
 
 int main() {
 
-    kalman::filters::KalmanFilter *kf = new kalman::filters::KalmanFilter(2);
-    kalman::filters::ExtendedKalmanFilter *ekf = new kalman::filters::ExtendedKalmanFilter(2);
+    kalman::filters::KalmanFilter *kf = new kalman::filters::KalmanFilter(2, 3, 4);
+    kalman::filters::ExtendedKalmanFilter *ekf = new kalman::filters::ExtendedKalmanFilter(2, 3, 4);
 
     delete kf;
     delete ekf;
