@@ -3,15 +3,18 @@
 using namespace kalman::filters;
 
 KalmanFilter::KalmanFilter(size_t stateDimension, size_t controlDimension, size_t observationDimension) : stateDimension(stateDimension),
-controlDimension(controlDimension), observationDimension(controlDimension) {
+controlDimension(controlDimension), observationDimension(observationDimension) {
 
     // initialize the state estimate with zeros
     this->currStateEstimate = Eigen::VectorXd::Zero(stateDimension);
 
-    // initialize the motion/process noise matrix
+    // initialize the predicted state covariance
+    this->P = Eigen::MatrixXd::Zero(stateDimension, stateDimension);
+
+    // initialize the motion/process covariance
     this->R = Eigen::MatrixXd::Zero(stateDimension, stateDimension);
 
-    // initialize the observation/measurement noise matrix
+    // initialize the observation/measurement covariance
     this->Q = Eigen::MatrixXd::Zero(observationDimension, observationDimension);
 }
 
@@ -33,11 +36,13 @@ Eigen::VectorXd KalmanFilter::getPrediction(Eigen::VectorXd control) {
     // ensure no two steps of the kalman filter are executed simultaneously
     std::lock_guard kalmanLock(this->kalmanMutex);
 
+    // ----- PREDICTION STEP -----
+
     // update the estimate from the motion and control models
     this->currStateEstimate = this->A * this->currStateEstimate + this->B * control;
 
-    // update the uncertainty
-    this->currUncertainty = this->A * this->currUncertainty * this->A.transpose() + this->R;
+    // update the state covariance 
+    this->P = this->A * this->P * this->A.transpose() + this->R;
 
     return currStateEstimate;
 }
@@ -50,8 +55,19 @@ void KalmanFilter::incorporateMeasurement(Eigen::VectorXd observation) {
 
     this->lastMeasurementTimestamp = std::chrono::system_clock::now();
 
-    // TODO
     std::lock_guard kalmanLock(this->kalmanMutex);
+
+    // ----- CORRECTION STEP -----
+
+    // compute the kalman gain
+    this->K = this->P * this->C.transpose() * (this->C * this->P * this->C.transpose() + this->Q).inverse();
+
+    // compute the corrected state estimate
+    this->currStateEstimate = this->currStateEstimate + this->K * (observation - this->C * this->currStateEstimate);
+
+    // compute the corrected state covariance
+    this->P = (Eigen::MatrixXd::Identity(this->stateDimension, this->stateDimension) - this->K * this->C) * this->P;
+
 }
 
 void KalmanFilter::setMotionMatrix(Eigen::MatrixXd A) {

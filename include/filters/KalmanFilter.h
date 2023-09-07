@@ -51,10 +51,16 @@ namespace kalman::filters {
 
         private:
 
+            /*! \brief Mutex on the main functionality of the kalman filter. */
             std::mutex kalmanMutex;
 
+            /*! \brief Dimension of the state vector. */
             const size_t stateDimension;
+
+            /*! \brief Dimension of the control vector. */
             const size_t controlDimension;
+
+            /*! \brief Dimension of the observation/measurement vector. */
             const size_t observationDimension;
 
             /*! \brief State vector. */
@@ -72,16 +78,20 @@ namespace kalman::filters {
             /*! \brief Matrix describing how to map the state to the observation. */
             Eigen::MatrixXd C;
 
-            /*! \brief Motion/process noise matrix. */
+            /*! \brief Predicted state covariance. */
+            Eigen::MatrixXd P;
+
+            /*! \brief Motion/process covariance. */
             Eigen::MatrixXd R;
 
-            /*! \brief Measurement/observation noise matrix. */
+            /*! \brief Measurement/observation covariance. */
             Eigen::MatrixXd Q;
+
+            /*! \brief Kalman gain matrix. */
+            Eigen::MatrixXd K;
 
             /*! \brief Last measurement timestamp. */
             std::chrono::time_point<std::chrono::system_clock> lastMeasurementTimestamp;
-
-            // TODO: covariance matrices
 
 	};
 };
