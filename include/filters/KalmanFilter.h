@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <chrono>
+#include <mutex>
 
 namespace kalman::filters {
     
@@ -16,9 +17,8 @@ namespace kalman::filters {
             /*! \brief Hardcode a new state estimate. Use at your own risk. */
             void setStateEstimate(Eigen::VectorXd newState);
 
-            // TODO: how to incorporate the controls generically
             /*! \brief Get the next state prediction from the system dynamics model and controls. Updates the error covariance. */
-            Eigen::VectorXd getPrediction();
+            Eigen::VectorXd getPrediction(Eigen::VectorXd control);
 
             // TODO: how to incorporate the measurements generically
             /*! \brief Incorporate a measurement/observation to correct the state. Updates error covariance. */
@@ -57,12 +57,17 @@ namespace kalman::filters {
 
         private:
 
+            std::mutex kalmanMutex;
+
             const size_t stateDimension;
             const size_t controlDimension;
             const size_t observationDimension;
 
             /*! \brief State vector. */
             Eigen::VectorXd currStateEstimate;
+
+            /*! \brief Measurement estimate (prediction step). */
+            Eigen::VectorXd currMeasurementEstimate;
 
             /*! \brief Matrix describing the motion evolution without controls. */
             Eigen::MatrixXd A;

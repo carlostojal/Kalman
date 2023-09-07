@@ -7,17 +7,37 @@ controlDimension(controlDimension), observationDimension(controlDimension) {
 
     // initialize the state estimate with zeros
     this->currStateEstimate = Eigen::VectorXd::Zero(stateDimension);
+
+    // initialize the process and measurement noise with zeros
+    this->processNoise = Eigen::VectorXd::Zero(stateDimension);
+    this->measurementNoise = Eigen::VectorXd::Zero(observationDimension);
 }
 
 void KalmanFilter::setStateEstimate(Eigen::VectorXd newState) {
 
-    // TODO: check state dimension
+    // check state dimension
+    if(newState.rows() != this->stateDimension)
+        throw std::runtime_error("Mismatched state dimension!");
+
     this->currStateEstimate = newState;
 }
 
-Eigen::VectorXd KalmanFilter::getPrediction() {
-    // TODO
-    return Eigen::VectorXd::Zero(this->stateDimension);
+Eigen::VectorXd KalmanFilter::getPrediction(Eigen::VectorXd control) {
+
+    // check the control vector dimension
+    if(control.rows() != this->controlDimension)
+        throw std::runtime_error("Mismatched control dimension!");
+
+    // ensure no two steps of the kalman filter are executed simultaneously
+    std::lock_guard kalmanLock(this->kalmanMutex);
+
+    // update the estimate from the motion and control models
+    this->currStateEstimate = this->A * this->currStateEstimate + this->B * control + this->processNoise;
+
+    // update the measurement estimate, to use it later on correction
+    this->currMeasurementEstimate = this->C * this->currStateEstimate + this->measurementNoise;
+
+    return currStateEstimate;
 }
 
 void KalmanFilter::incorporateMeasurement(Eigen::VectorXd observation) {
@@ -27,7 +47,9 @@ void KalmanFilter::incorporateMeasurement(Eigen::VectorXd observation) {
         throw std::runtime_error("Mismatched observation dimension!");
 
     this->lastMeasurementTimestamp = std::chrono::system_clock::now();
+
     // TODO
+    std::lock_guard kalmanLock(this->kalmanMutex);
 }
 
 void KalmanFilter::setMotionMatrix(Eigen::MatrixXd A) {
