@@ -8,9 +8,11 @@ controlDimension(controlDimension), observationDimension(controlDimension) {
     // initialize the state estimate with zeros
     this->currStateEstimate = Eigen::VectorXd::Zero(stateDimension);
 
-    // initialize the process and measurement noise with zeros
-    this->processNoise = Eigen::VectorXd::Zero(stateDimension);
-    this->measurementNoise = Eigen::VectorXd::Zero(observationDimension);
+    // initialize the motion/process noise matrix
+    this->R = Eigen::MatrixXd::Zero(stateDimension, stateDimension);
+
+    // initialize the observation/measurement noise matrix
+    this->Q = Eigen::MatrixXd::Zero(observationDimension, observationDimension);
 }
 
 void KalmanFilter::setStateEstimate(Eigen::VectorXd newState) {
@@ -32,10 +34,10 @@ Eigen::VectorXd KalmanFilter::getPrediction(Eigen::VectorXd control) {
     std::lock_guard kalmanLock(this->kalmanMutex);
 
     // update the estimate from the motion and control models
-    this->currStateEstimate = this->A * this->currStateEstimate + this->B * control + this->processNoise;
+    this->currStateEstimate = this->A * this->currStateEstimate + this->B * control;
 
-    // update the measurement estimate, to use it later on correction
-    this->currMeasurementEstimate = this->C * this->currStateEstimate + this->measurementNoise;
+    // update the uncertainty
+    this->currUncertainty = this->A * this->currUncertainty * this->A.transpose() + this->R;
 
     return currStateEstimate;
 }
@@ -76,22 +78,6 @@ void KalmanFilter::setObservationMappingMatrix(Eigen::MatrixXd C) {
     this->C = C;
 }
 
-void KalmanFilter::setProcessNoise(Eigen::VectorXd processNoise) {
-    // check the process noise vector dimension
-    if(processNoise.rows() != this->stateDimension)
-        throw std::runtime_error("Mismatched process noise dimension. Must be the same as the state dimension.");
-
-    this->processNoise = processNoise;
-}
-
-void KalmanFilter::setMeasurementNoise(Eigen::VectorXd measurementNoise) {
-    // check the measurement noise vector dimension
-    if(measurementNoise.rows() != this->observationDimension)
-        throw std::runtime_error("Mismatched measurement noise dimenson. Must be the same as the observation dimension.");
-
-    this->measurementNoise = measurementNoise;
-}
-
 Eigen::MatrixXd KalmanFilter::getMotionMatrix() {
     return this->A;
 }
@@ -105,11 +91,11 @@ Eigen::MatrixXd KalmanFilter::getObservationMappingMatrix() {
 }
 
 Eigen::VectorXd KalmanFilter::getProcessNoise() {
-    return this->processNoise;
+    return this->R;
 }
 
 Eigen::VectorXd KalmanFilter::getMeasurementNoise() {
-    return this->measurementNoise;
+    return this->Q;
 }
 
 
